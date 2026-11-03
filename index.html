@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permisos Vigentes - DGPCIURB CABA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --gold:#C8A84B;--gold-l:#E5C97A;--dark:#0D0F14;--dark2:#161923;--dark3:#1E2330;
+  --border:rgba(200,168,75,.18);--text:#E8E4DA;--muted:#8A8F9E;
+  --red:#E05252;--blue:#4A90D9;--amber:#D4A843;--green:#52B788;--purple:#9B72CF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+header{background:linear-gradient(135deg,var(--dark2),#111520);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:62px;flex-shrink:0;position:relative}
+header::after{content:'';position:absolute;left:0;bottom:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.hlogo{width:36px;height:36px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:15px;color:var(--dark);font-weight:700;flex-shrink:0}
+.htitles{margin-left:12px}
+.htitles h1{font-family:'DM Serif Display',serif;font-size:16px}
+.htitles p{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.hright{display:flex;align-items:center;gap:14px}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(200,168,75,.08);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:10px;color:var(--gold-l)}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.hdate{font-size:10px;color:var(--muted)}
+.btn-dl{background:linear-gradient(135deg,var(--gold),var(--gold-l));border:none;border-radius:5px;color:var(--dark);font-family:'DM Sans',sans-serif;font-weight:600;font-size:11px;padding:7px 14px;cursor:pointer;transition:all .2s;letter-spacing:.04em;box-shadow:0 2px 8px rgba(200,168,75,.25)}
+.btn-dl:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(200,168,75,.4)}
+.btn-exp{background:transparent;color:var(--gold-l);border:1px solid var(--border);box-shadow:none}
+.btn-exp:hover{background:rgba(200,168,75,.1);border-color:var(--gold)}
+.footer{flex-shrink:0;background:var(--dark2);border-top:1px solid var(--border);padding:7px 32px;display:flex;align-items:center;justify-content:flex-end;font-size:10px;color:var(--muted);letter-spacing:.02em}
+.footer b{color:var(--gold-l);font-weight:500}
+.kpi-bar{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.kpi{padding:12px 20px;border-right:1px solid var(--border);position:relative;transition:background .2s}
+.kpi:last-child{border-right:none}
+.kpi:hover{background:rgba(200,168,75,.03)}
+.kpi-line{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .2s}
+.kpi:hover .kpi-line{opacity:1}
+.kpi-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.kpi-val{font-family:'DM Serif Display',serif;font-size:28px;line-height:1;margin-bottom:3px}
+.kpi-sub{font-size:9px;color:var(--muted)}
+.main{display:grid;grid-template-columns:370px 1fr;flex:1;overflow:hidden}
+.lpanel{background:var(--dark2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.lpanel::-webkit-scrollbar{width:3px}
+.lpanel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.psec{padding:14px 18px;border-bottom:1px solid var(--border)}
+.psec-title{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.psec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.fgroup{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.fgroup:last-of-type{margin-bottom:0}
+.fgroup label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.fselect,.finput{background:var(--dark3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 10px;outline:none;width:100%;transition:border-color .2s}
+.fselect{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%238A8F9E'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+.fselect:hover,.fselect:focus,.finput:hover,.finput:focus{border-color:var(--gold)}
+.fselect option{background:var(--dark3)}
+.finput::placeholder{color:var(--muted)}
+.autocomplete-wrap{position:relative}
+.autocomplete-list{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--dark3);border:1px solid var(--gold);border-radius:5px;max-height:180px;overflow-y:auto;z-index:3000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.autocomplete-list::-webkit-scrollbar{width:3px}
+.autocomplete-list::-webkit-scrollbar-thumb{background:var(--border)}
+.ac-item{padding:7px 10px;font-size:11px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);transition:background .1s}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.active{background:rgba(200,168,75,.12);color:var(--gold-l)}
+.ac-highlight{color:var(--gold-l);font-weight:600}
+.altura-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:8px}
+.altura-sep{font-size:10px;color:var(--muted);text-align:center}
+.finput-sm{background:var(--dark3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;width:100%;transition:border-color .2s;text-align:center}
+.finput-sm:hover,.finput-sm:focus{border-color:var(--gold)}
+.finput-sm::placeholder{color:var(--muted)}
+.filters-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-reset{margin-top:10px;width:100%;background:rgba(200,168,75,.08);border:1px solid var(--border);border-radius:5px;color:var(--gold-l);font-family:'DM Sans',sans-serif;font-size:10px;padding:7px;cursor:pointer;transition:all .2s;letter-spacing:.05em}
+.btn-reset:hover{background:rgba(200,168,75,.18);border-color:var(--gold)}
+.result-counter{font-size:10px;color:var(--muted);text-align:center;margin-top:8px}
+.result-counter span{color:var(--gold-l);font-weight:600}
+.legend{display:flex;flex-direction:column;gap:7px}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:11px}
+.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.leg-name{flex:1}
+.leg-n{color:var(--gold-l);font-weight:500;font-size:12px}
+.leg-pct{color:var(--muted);font-size:9px}
+.sol-list{display:flex;flex-direction:column;gap:1px}
+.sol-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.sol-row:last-child{border-bottom:none}
+.sol-name{font-size:10px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sol-bar-wrap{width:70px;flex-shrink:0}
+.sol-bar{height:3px;background:rgba(200,168,75,.12);border-radius:2px;overflow:hidden}
+.sol-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-l));border-radius:2px}
+.sol-val{font-size:10px;color:var(--gold-l);font-weight:500;width:32px;text-align:right;flex-shrink:0}
+.map-wrap{position:relative}
+#map{width:100%;height:100%}
+.map-overlay{position:absolute;top:12px;right:12px;background:rgba(13,15,20,.93);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:8px;padding:12px 16px;z-index:1000;min-width:165px}
+.map-overlay-title{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:9px}
+.map-leg{display:flex;flex-direction:column;gap:6px}
+.map-leg-item{display:flex;align-items:center;gap:7px;font-size:10px}
+.map-ldot{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(255,255,255,.2)}
+.gen-badge{position:absolute;bottom:10px;right:12px;z-index:1000;background:rgba(13,15,20,.8);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:9px;color:var(--muted)}
+.leaflet-control-zoom a{background:var(--dark3)!important;color:var(--text)!important;border-color:var(--border)!important}
+.leaflet-popup-content-wrapper{background:var(--dark2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.leaflet-popup-tip{background:var(--dark2)}
+.leaflet-popup-content{margin:12px 16px}
+.pu h4{color:var(--gold-l);font-size:12px;margin-bottom:8px;font-family:'DM Serif Display',serif}
+.pu-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:11px}
+.pu-grid .k{color:var(--muted)}
+.pu-grid .v{color:var(--text)}
+.pu-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;margin-top:7px}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center">
+    <div class="hlogo">BA</div>
+    <div class="htitles">
+      <h1>Mapa de Permisos Vigentes</h1>
+      <p>DGPCIURB - Secretaría de Mantenimiento Urbano - MEPHU</p>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="live-badge"><span class="live-dot"></span><span id="genDate">Generado</span></div>
+    <span class="hdate" id="fechaHoy"></span>
+    <button class="btn-dl btn-exp" onclick="exportData()">⬇ Exportar datos</button>
+    <button class="btn-dl" onclick="downloadMap()">⬇ Descargar mapa</button>
+  </div>
+</header>
+
+<div class="kpi-bar">
+  <div class="kpi"><div class="kpi-line" style="background:var(--gold)"></div><div class="kpi-lbl">Total Posiciones</div><div class="kpi-val" style="color:var(--gold-l)" id="kTotal">-</div><div class="kpi-sub">registros vigentes</div></div>
+  <div class="kpi"><div class="kpi-line" style="background:var(--red)"></div><div class="kpi-lbl">Decl. Emergencia</div><div class="kpi-val" style="color:#FF8A8A" id="kEmerg">-</div><div class="kpi-sub" id="kEmergPct">-</div></div>
+  <div class="kpi"><div class="kpi-line" style="background:var(--blue)"></div><div class="kpi-lbl">Permiso Nuevo</div><div class="kpi-val" style="color:#7AB8F5" id="kNuevo">-</div><div class="kpi-sub" id="kNuevoPct">-</div></div>
+  <div class="kpi"><div class="kpi-line" style="background:var(--amber)"></div><div class="kpi-lbl">Permiso Contingencia</div><div class="kpi-val" style="color:var(--amber)" id="kConting">-</div><div class="kpi-sub" id="kContingPct">-</div></div>
+  <div class="kpi"><div class="kpi-line" style="background:var(--green)"></div><div class="kpi-lbl">Concedidos GCBA</div><div class="kpi-val" style="color:var(--green)" id="kConced">-</div><div class="kpi-sub" id="kConcedPct">-</div></div>
+</div>
+
+<div class="main">
+  <div class="lpanel">
+
+    <div class="psec">
+      <div class="psec-title">Búsqueda por Ubicación</div>
+      <div class="fgroup">
+        <label>Nombre de Calle</label>
+        <div class="autocomplete-wrap">
+          <input type="text" class="finput" id="fCalle" placeholder="Ej: CORRIENTES, RIVADAVIA AV..." autocomplete="off"
+            oninput="onCalleInput()" onkeydown="onCalleKeydown(event)" onfocus="onCalleInput()">
+          <div class="autocomplete-list" id="acList"></div>
+        </div>
+      </div>
+      <div class="fgroup" style="margin-top:4px">
+        <label>Altura de Calle <span style="color:var(--muted);font-size:8px;text-transform:none;letter-spacing:0">(rango opcional)</span></label>
+        <div class="altura-row">
+          <input type="number" class="finput-sm" id="fAlturaDesde" placeholder="Desde" min="0" oninput="applyFilters()">
+          <span class="altura-sep">-</span>
+          <input type="number" class="finput-sm" id="fAlturaHasta" placeholder="Hasta" min="0" oninput="applyFilters()">
+        </div>
+      </div>
+    </div>
+
+    <div class="psec">
+      <div class="psec-title">Otros Filtros</div>
+      <div class="filters-2col">
+        <div class="fgroup">
+          <label>Comuna</label>
+          <select class="fselect" id="fComuna" onchange="applyFilters()"><option value="">Todas</option></select>
+        </div>
+        <div class="fgroup">
+          <label>Tipo de Permiso</label>
+          <select class="fselect" id="fTipo" onchange="applyFilters()">
+            <option value="">Todos</option>
+            <option>Declaración Emergenc</option>
+            <option>Permiso - Nuevo</option>
+            <option>Permiso Contingencia</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label>Estado</label>
+          <select class="fselect" id="fEstado" onchange="applyFilters()">
+            <option value="">Todos</option>
+            <option>Concedido GCBA</option>
+            <option>En Proceso GCBA</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label>Acera / Calzada</label>
+          <select class="fselect" id="fAcCa" onchange="applyFilters()">
+            <option value="">Todos</option>
+            <option>ACERA</option>
+            <option>CALZADA</option>
+          </select>
+        </div>
+      </div>
+      <div class="fgroup" style="margin-top:0">
+        <label>Solicitante</label>
+        <select class="fselect" id="fSol" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <button class="btn-reset" onclick="resetFilters()">⟳ Restablecer todos los filtros</button>
+      <div class="result-counter">Mostrando <span id="countShown">-</span> de <span id="countTotal">-</span> permisos</div>
+    </div>
+
+    <div class="psec">
+      <div class="psec-title">Tipo de Permiso</div>
+      <div class="legend" id="legendTipo"></div>
+    </div>
+    <div class="psec">
+      <div class="psec-title">Estado</div>
+      <div class="legend" id="legendEstado"></div>
+    </div>
+    <div class="psec">
+      <div class="psec-title">Top Solicitantes</div>
+      <div class="sol-list" id="solList"></div>
+    </div>
+
+  </div>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-overlay">
+      <div class="map-overlay-title">Leyenda</div>
+      <div class="map-leg" id="mapLegend"></div>
+    </div>
+    <div class="gen-badge" id="genBadge"></div>
+  </div>
+</div>
+
+<footer class="footer">Propiedad de: <b>Facundo Monge - Gerencia Operativa de Permisos de Apertura en la vía pública</b></footer>
+
+<script src="data.js"></script>
+<script>
+const TIPO_COLOR = {'Declaración Emergenc':'#E05252','Permiso - Nuevo':'#4A90D9','Permiso Contingencia':'#D4A843'};
+const TIPO_LABEL = {'Declaración Emergenc':'Decl. Emergencia','Permiso - Nuevo':'Permiso Nuevo','Permiso Contingencia':'Permiso Contingencia'};
+const ESTADO_COLOR = {'Concedido GCBA':'#52B788','En Proceso GCBA':'#9B72CF'};
+let currentData = DATA;
+
+document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+document.getElementById('genDate').textContent = 'Generado: ' + (GEN_DATE||'');
+document.getElementById('genBadge').textContent = 'Datos: ' + (GEN_DATE||'');
+
+// Poblar comunas
+const fComuna = document.getElementById('fComuna');
+COMUNAS.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent='Comuna '+c; fComuna.appendChild(o); });
+
+// Poblar solicitantes
+const fSol = document.getElementById('fSol');
+SOLS.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; fSol.appendChild(o); });
+
+// Mapa
+const map = L.map('map',{center:[-34.615,-58.435],zoom:12,zoomControl:true,attributionControl:false});
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:''}).addTo(map);
+let markerLayer = L.layerGroup().addTo(map);
+
+function makeIcon(tipo){
+  const c=TIPO_COLOR[tipo]||'#888';
+  return L.divIcon({className:'',html:`<div style="width:8px;height:8px;border-radius:50%;background:${c};border:1.5px solid rgba(255,255,255,.35);box-shadow:0 0 5px ${c}99"></div>`,iconSize:[8,8],iconAnchor:[4,4]});
+}
+function fmt(n){ return n.toLocaleString('es-AR'); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderMap(points){
+  markerLayer.clearLayers();
+  points.forEach(p=>{
+    const badge = p.estado==='Concedido GCBA'
+      ? `<span class="pu-badge" style="background:rgba(82,183,136,.2);color:#52B788">✓ Concedido GCBA</span>`
+      : `<span class="pu-badge" style="background:rgba(155,114,207,.2);color:#9B72CF">◉ En Proceso GCBA</span>`;
+    const m=L.marker([p.lat,p.lng],{icon:makeIcon(p.tipo)});
+    m.bindPopup(`<div class="pu"><h4>${TIPO_LABEL[p.tipo]||p.tipo}</h4>
+      <div class="pu-grid">
+        <span class="k">Solicitante</span><span class="v">${esc(p.sol)}</span>
+        <span class="k">N° Operación</span><span class="v">${esc(p.op)}</span>
+        <span class="k">Nombre de Calle</span><span class="v">${esc(p.calle)}</span>
+        <span class="k">Altura desde</span><span class="v">${fmt(p.altura)}</span>
+        <span class="k">Altura hasta</span><span class="v">${fmt(p.alturaHasta)}</span>
+        <span class="k">Comuna</span><span class="v">${p.comuna}</span>
+        <span class="k">Acera/Calzada</span><span class="v">${esc(p.acca)}</span>
+        <span class="k">Inicio Posición</span><span class="v">${esc(p.inicio)}</span>
+        <span class="k">Fe. Fin P.</span><span class="v">${esc(p.fin)}</span>
+      </div>${badge}</div>`,{maxWidth:250});
+    markerLayer.addLayer(m);
+  });
+  if(points.length>0 && points.length<DATA.length){
+    const lats=points.map(p=>p.lat),lngs=points.map(p=>p.lng);
+    map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[40,40],maxZoom:16});
+  } else if(points.length===DATA.length){
+    map.setView([-34.615,-58.435],12);
+  }
+}
+
+function updateKPIs(points){
+  const total=points.length;
+  document.getElementById('kTotal').textContent=fmt(total);
+  [['Declaración Emergenc','kEmerg','kEmergPct'],['Permiso - Nuevo','kNuevo','kNuevoPct'],['Permiso Contingencia','kConting','kContingPct']].forEach(([t,id,pid])=>{
+    const n=points.filter(p=>p.tipo===t).length;
+    document.getElementById(id).textContent=fmt(n);
+    document.getElementById(pid).textContent=total?Math.round(n/total*100)+'% del total':'-';
+  });
+  const conc=points.filter(p=>p.estado==='Concedido GCBA').length;
+  document.getElementById('kConced').textContent=fmt(conc);
+  document.getElementById('kConcedPct').textContent=total?Math.round(conc/total*100)+'% del total':'-';
+}
+
+function updateLegends(points){
+  const total=points.length;
+  document.getElementById('legendTipo').innerHTML=['Declaración Emergenc','Permiso - Nuevo','Permiso Contingencia'].map(t=>{
+    const n=points.filter(p=>p.tipo===t).length;
+    return `<div class="leg-item"><div class="leg-dot" style="background:${TIPO_COLOR[t]}"></div><span class="leg-name">${TIPO_LABEL[t]}</span><span class="leg-pct">${total?Math.round(n/total*100):0}%</span><span class="leg-n">${fmt(n)}</span></div>`;
+  }).join('');
+  document.getElementById('legendEstado').innerHTML=['Concedido GCBA','En Proceso GCBA'].map(e=>{
+    const n=points.filter(p=>p.estado===e).length;
+    return `<div class="leg-item"><div class="leg-dot" style="background:${ESTADO_COLOR[e]}"></div><span class="leg-name">${e}</span><span class="leg-pct">${total?Math.round(n/total*100):0}%</span><span class="leg-n">${fmt(n)}</span></div>`;
+  }).join('');
+  document.getElementById('mapLegend').innerHTML=Object.entries(TIPO_COLOR).map(([t,c])=>{
+    const n=points.filter(p=>p.tipo===t).length;
+    return `<div class="map-leg-item"><div class="map-ldot" style="background:${c}"></div><span style="flex:1">${TIPO_LABEL[t]}</span><span style="color:var(--gold-l);font-weight:500">${fmt(n)}</span></div>`;
+  }).join('');
+}
+
+function updateSolicitantes(points){
+  const counts={};
+  points.forEach(p=>{counts[p.sol]=(counts[p.sol]||0)+1;});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxV=sorted[0]?.[1]||1;
+  document.getElementById('solList').innerHTML=sorted.map(([name,val])=>`
+    <div class="sol-row">
+      <span class="sol-name" title="${esc(name)}">${esc(name)}</span>
+      <div class="sol-bar-wrap"><div class="sol-bar"><div class="sol-bar-fill" style="width:${Math.round(val/maxV*100)}%"></div></div></div>
+      <span class="sol-val">${fmt(val)}</span>
+    </div>`).join('');
+}
+
+// Autocomplete
+let acIndex=-1, selectedCalle='';
+function onCalleInput(){
+  const val=document.getElementById('fCalle').value.trim().toUpperCase();
+  selectedCalle=''; acIndex=-1;
+  const list=document.getElementById('acList');
+  if(val.length<2){list.style.display='none';applyFilters();return;}
+  const matches=CALLES.filter(c=>c.toUpperCase().includes(val)).slice(0,12);
+  if(!matches.length){list.style.display='none';applyFilters();return;}
+  list.innerHTML=matches.map((c,i)=>{
+    const hi=c.replace(new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>`<span class="ac-highlight">${m}</span>`);
+    return `<div class="ac-item" data-val="${esc(c)}" onmousedown="selectCalle(this.dataset.val)">
+      ${hi}<span style="font-size:9px;color:var(--muted);margin-left:6px">${DATA.filter(p=>p.calle===c).length} permisos</span></div>`;
+  }).join('');
+  list.style.display='block';
+}
+function onCalleKeydown(e){
+  const list=document.getElementById('acList');
+  const items=list.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){e.preventDefault();acIndex=Math.min(acIndex+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('active',i===acIndex));}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIndex=Math.max(acIndex-1,0);items.forEach((el,i)=>el.classList.toggle('active',i===acIndex));}
+  else if(e.key==='Enter'){e.preventDefault();if(acIndex>=0&&items[acIndex])selectCalle(items[acIndex].dataset.val);}
+  else if(e.key==='Escape'){list.style.display='none';}
+}
+function selectCalle(val){
+  selectedCalle=val;
+  document.getElementById('fCalle').value=val;
+  document.getElementById('acList').style.display='none';
+  applyFilters();
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.autocomplete-wrap'))document.getElementById('acList').style.display='none';});
+
+function applyFilters(){
+  const calleRaw=document.getElementById('fCalle').value.trim().toUpperCase();
+  const altDesde=parseInt(document.getElementById('fAlturaDesde').value)||0;
+  const altHasta=parseInt(document.getElementById('fAlturaHasta').value)||999999;
+  const comuna=document.getElementById('fComuna').value;
+  const tipo=document.getElementById('fTipo').value;
+  const estado=document.getElementById('fEstado').value;
+  const acca=document.getElementById('fAcCa').value;
+  const sol=document.getElementById('fSol').value;
+  let f=DATA;
+  if(selectedCalle) f=f.filter(p=>p.calle===selectedCalle);
+  else if(calleRaw.length>=2) f=f.filter(p=>p.calle.toUpperCase().includes(calleRaw));
+  if(calleRaw.length>=2&&(altDesde>0||altHasta<999999)) f=f.filter(p=>p.altura>=altDesde&&p.altura<=altHasta);
+  if(comuna) f=f.filter(p=>p.comuna==parseInt(comuna));
+  if(tipo)   f=f.filter(p=>p.tipo===tipo);
+  if(estado) f=f.filter(p=>p.estado===estado);
+  if(acca)   f=f.filter(p=>p.acca===acca);
+  if(sol)    f=f.filter(p=>p.sol===sol);
+  currentData=f;
+  document.getElementById('countShown').textContent=fmt(f.length);
+  renderMap(f); updateKPIs(f); updateLegends(f); updateSolicitantes(f);
+}
+
+function resetFilters(){
+  document.getElementById('fCalle').value='';
+  document.getElementById('fAlturaDesde').value='';
+  document.getElementById('fAlturaHasta').value='';
+  document.getElementById('acList').style.display='none';
+  selectedCalle='';
+  ['fComuna','fTipo','fEstado','fAcCa','fSol'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+document.getElementById('countTotal').textContent=fmt(DATA.length);
+applyFilters();
+
+function downloadMap(){
+  const btn=document.querySelector('.btn-dl');
+  if(!window.pywebview||!window.pywebview.api||!window.pywebview.api.guardar_mapa){
+    alert('El guardado de archivos está desactivado en esta vista.');
+    return;
+  }
+  if(typeof html2canvas==='undefined'){
+    alert('No se pudo cargar la herramienta de captura. Revisa tu conexión a internet.');
+    return;
+  }
+  const orig=btn.textContent;
+  btn.textContent='Generando imagen...';
+  btn.disabled=true;
+  // timeout de seguridad para no quedar colgados
+  let finito=false;
+  const timer=setTimeout(()=>{
+    if(!finito){ finito=true; btn.textContent=orig; btn.disabled=false; alert('La captura tardó demasiado. Intentá de nuevo.'); }
+  },20000);
+  const gestionar=function(ok,msg){
+    if(finito) return;
+    finito=true; clearTimeout(timer);
+    btn.textContent=orig; btn.disabled=false;
+    if(!ok) alert(msg);
+  };
+  html2canvas(map.getContainer(),{useCORS:true,logging:false,backgroundColor:'#0D0F14'}).then(canvas=>{
+    const dataurl=canvas.toDataURL('image/png');
+    window.pywebview.api.guardar_mapa(dataurl).then(ruta=>{
+      if(ruta&&ruta!=='Cancelado'&&!String(ruta).startsWith('Error')){
+        gestionar(true); alert('Mapa guardado en:\n'+ruta);
+      } else if(ruta==='Cancelado'){
+        gestionar(true);
+      } else {
+        gestionar(false,String(ruta));
+      }
+    }).catch(e=>{ gestionar(false,'Error al guardar: '+e); });
+  }).catch(e=>{ gestionar(false,'No se pudo capturar el mapa: '+e); });
+}
+
+function exportData(){
+  const btn=document.querySelector('.btn-exp');
+  if(!window.pywebview||!window.pywebview.api||!window.pywebview.api.exportar){
+    alert('El guardado de archivos está desactivado en esta vista.');
+    return;
+  }
+  const filas=currentData.map(p=>({op:p.op,sol:p.sol,contratista:p.contratista,acca:p.acca,tipo:p.tipo,estado:p.estado,calle:p.calle,altura:p.altura,alturaHasta:p.alturaHasta,comuna:p.comuna,inicio:p.inicio,fin:p.fin,lat:p.lat,lng:p.lng}));
+  const orig=btn.textContent;
+  btn.textContent='Exportando...';
+  btn.disabled=true;
+  window.pywebview.api.exportar(filas).then(ruta=>{
+    btn.textContent=orig;
+    btn.disabled=false;
+    if(ruta&&ruta!=='Cancelado'&&!String(ruta).startsWith('Error')){
+      alert('Exportados '+currentData.length.toLocaleString('es-AR')+' registros a:\n'+ruta);
+    } else if(ruta==='Cancelado'){
+      return;
+    } else {
+      alert(String(ruta));
+    }
+  }).catch(e=>{
+    btn.textContent=orig;
+    btn.disabled=false;
+    alert('Error al exportar: '+e);
+  });
+}
+</script>
+</body>
+</html>
